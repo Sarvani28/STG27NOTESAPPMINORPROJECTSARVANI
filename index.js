@@ -11,6 +11,9 @@ import noteRouter from "./routes/note.route.js";
 dotenv.config();
 
 const app = express();
+const allowedOrigins = [
+  "https://stg27notesappminorprojectfsarvani.onrender.com", // your frontend
+];
 
 // ✅ Connect to MongoDB
 mongoose
@@ -21,18 +24,18 @@ mongoose
   .catch((err) => {
     console.log(err);
   });
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true, // needed for cookies/token headers
+  })
+);
+
 
 // ✅ Middleware Setup
 app.use(express.json());
 app.use(cookieParser());
 
-// ✅ Proper CORS setup (replace with your frontend domains as needed)
-app.use(
-  cors({
-    origin: ["http://localhost:5173", "https://your-frontend.vercel.app"],
-    credentials: true,
-  })
-);
 
 // ✅ API Routes
 app.use("/api/auth", authRouter);
