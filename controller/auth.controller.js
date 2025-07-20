@@ -9,7 +9,7 @@ export const signup = async (req, res, next) => {
   const isValidUser = await User.findOne({ email })
 
   if (isValidUser) {
-    return next(errorHandler(400, "User already Exist"))
+    return next(errorHandler(400, "User already exists"))
   }
 
   const hashedPassword = bcryptjs.hashSync(password, 10)
@@ -25,7 +25,7 @@ export const signup = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: "User Created Successfully",
+      message: "User created successfully",
     })
   } catch (error) {
     next(error)
@@ -37,30 +37,33 @@ export const signin = async (req, res, next) => {
 
   try {
     const validUser = await User.findOne({ email })
-
     if (!validUser) {
       return next(errorHandler(404, "User not found"))
     }
 
     const validPassword = bcryptjs.compareSync(password, validUser.password)
-
     if (!validPassword) {
-      return next(errorHandler(401, "Wrong Credentials"))
+      return next(errorHandler(401, "Wrong credentials"))
     }
 
-    const token = jwt.sign({ id: validUser._id }, process.env.JWT_SECRET, { expiresIn: "1d" })
+    const token = jwt.sign({ id: validUser._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    })
 
     const { password: pass, ...rest } = validUser._doc
 
-    res.cookie("access_token", token, {
+    // ✅ Set secure, cross-origin cookie
+    res.cookie("accessToken", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 24 * 60 * 60 * 1000 
-      }).status(200).json({
+      secure: true, // ✅ Important for Render HTTPS
+      sameSite: "None", // ✅ Required for frontend on localhost
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    })
+
+    res.status(200).json({
       success: true,
-      message: "Login Successful!",
-      rest,
+      message: "Login successful!",
+      user: rest,
     })
   } catch (error) {
     next(error)
@@ -69,7 +72,10 @@ export const signin = async (req, res, next) => {
 
 export const signout = async (req, res, next) => {
   try {
-    res.clearCookie("access_token")
+    res.clearCookie("accessToken", {
+      sameSite: "None",
+      secure: true,
+    })
 
     res.status(200).json({
       success: true,
