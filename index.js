@@ -1,59 +1,66 @@
-import express from "express"
-import mongoose from "mongoose"
-import dotenv from "dotenv"
-import cookieParser from "cookie-parser"
-import cors from "cors"
-import { fileURLToPath } from "url"
-import path from "path"
-dotenv.config()
+import express from "express";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import { fileURLToPath } from "url";
+import path from "path";
+import authRouter from "./routes/auth.route.js";
+import noteRouter from "./routes/note.route.js";
 
+dotenv.config();
+
+const app = express();
+
+// ✅ Connect to MongoDB
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
-    console.log("Connected to mongoDB")
+    console.log("Connected to mongoDB");
   })
   .catch((err) => {
-    console.log(err)
+    console.log(err);
+  });
+
+// ✅ Middleware Setup
+app.use(express.json());
+app.use(cookieParser());
+
+// ✅ Proper CORS setup (replace with your frontend domains as needed)
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://your-frontend.vercel.app"],
+    credentials: true,
   })
+);
 
-const app = express()
+// ✅ API Routes
+app.use("/api/auth", authRouter);
+app.use("/api/note", noteRouter);
 
-// to make input as json
-app.use(express.json())
-app.use(cookieParser())
-app.use(cors())
-
-// import routes
-import authRouter from "./routes/auth.route.js"
-import noteRouter from "./routes/note.route.js"
-
-app.use("/api/auth", authRouter)
-app.use("/api/note", noteRouter)
-
-// error handling
+// ✅ Error Handler
 app.use((err, req, res, next) => {
-  const statusCode = err.statusCode || 500
-  const message = err.message || "Internal Serer Error"
+  const statusCode = err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
 
   return res.status(statusCode).json({
     success: false,
     statusCode,
     message,
-  })
-})
+  });
+});
+
+// ✅ Static File Setup (for Vite production build)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const distPath = path.join(__dirname, "dist");
 
-// Path to your dist folder after Vite build
-const distPath = path.join(__dirname, 'dist');
-
-// Serve Static Files (after building with Vite)
 app.use(express.static(distPath));
-
-// For all other routes, serve the index.html (for frontend routing)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(distPath, 'index.html'));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(distPath, "index.html"));
 });
+
+// ✅ Start Server
 app.listen(3000, () => {
-  console.log("Server is running on port 3000")
-})
+  console.log("Server is running on port 3000");
+});
