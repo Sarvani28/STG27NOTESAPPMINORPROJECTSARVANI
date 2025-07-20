@@ -12,7 +12,7 @@ dotenv.config();
 
 const app = express();
 const allowedOrigins = [
-  "https://stg27notesappminorprojectfsarvani.onrender.com", "http://localhost:5173"// your frontend
+  "https://stg27notesappminorprojectfsarvani.onrender.com", "http://localhost:3000"// your frontend
 ];
 
 // ✅ Connect to MongoDB
